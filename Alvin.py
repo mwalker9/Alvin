@@ -1,10 +1,12 @@
 import os
 import string
+from stop_words import get_stop_words
 
 class Alvin:
 	
 	def __init__(self):
 		self.inspirationSet = []
+		self.stopWords = get_stop_words('en')
 	
 	def LoadInspirationSet(self):
 		inspirationDirectory = "./InspirationSet/"
@@ -34,7 +36,10 @@ class Alvin:
 		return
 	
 	def isWordImportant(self, data):
-		return
+		if data in self.stopWords:
+			return True
+		else:
+			return False
 	
 	def getNewLine(self, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme): #magic happens
 		return
