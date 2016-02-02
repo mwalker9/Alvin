@@ -22,8 +22,15 @@ class Alvin:
 		
 		
 	def LoadOriginal(self):
-		return
-	
+		inspirationFile = "./original.txt"
+		finalData = []
+		with open(inspirationFile) as f:
+			for line in f:
+				out = line.translate(string.maketrans("",""), string.punctuation)
+				out = out.strip()
+				finalData.append(out)
+		return finalData
+				
 	def getTheme(self, data):
 		return
 	

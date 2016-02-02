@@ -1,3 +1,5 @@
+import string
+
 class syllableCounter:
 	
 	syllableMap = dict()
@@ -16,7 +18,7 @@ class syllableCounter:
 					emphasisStr = ''.join(cleaned.split()[1::])
 					emphasisStr = emphasisStr.replace("2", "1")
 					emphasis = [int(s) for s in emphasisStr if s.isdigit()]
-					self.emphasisMap[cleaned.split()[0]] = emphasis
+					self.emphasisMap[cleaned.split()[0].translate(string.maketrans("",""), string.punctuation)] = emphasis
 				
 	def getSyllablesOf(self, word):
 		try:
