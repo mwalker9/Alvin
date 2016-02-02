@@ -60,7 +60,7 @@ class Alvin:
 		self.LoadInspirationSet()
 		data = self.LoadOriginal()
 		theme = self.getTheme(data)
-		newTheme = self.transformTheme(data)
+		newTheme = self.transformTheme(theme)
 		rhymeScheme = self.getRhymeScheme(data)
 		transformedText = []
 		for line in data:
