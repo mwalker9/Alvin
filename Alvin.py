@@ -1,6 +1,7 @@
 import os
 import string
 from stop_words import get_stop_words
+import syllableCounter
 
 class Alvin:
 	
@@ -33,7 +34,11 @@ class Alvin:
 		return
 	
 	def getMeter(self, data):
-		return
+		ctr = syllableCounter.syllableCounter()
+		a = []
+		for word in data.split(" "):
+			a = a + ctr.getEmphasisOf(word)
+		return a
 	
 	def isWordImportant(self, data):
 		if data in self.stopWords:
