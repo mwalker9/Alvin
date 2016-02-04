@@ -2,12 +2,14 @@ import os
 import string
 from stop_words import get_stop_words
 import syllableCounter
+import word2vec
 
 class Alvin:
 	
 	def __init__(self):
 		self.inspirationSet = []
 		self.stopWords = get_stop_words('en')
+		self.model = word2vec.load('./text8.bin')
 	
 	def LoadInspirationSet(self):
 		inspirationDirectory = "./InspirationSet/"
@@ -32,10 +34,21 @@ class Alvin:
 		return finalData
 				
 	def getTheme(self, data):
-		return
+		temp = [data[i].split() for i in range(len(data))]
+		temp = [temp[i][j] for i in range(len(temp)) for j in range(len(temp[i]))]
+		for word in temp:
+			if word not in self.model.vocab:
+				temp.remove(word)
+		indexes, sim = self.model.analogy(pos=temp, neg=[])
+		theme = self.model.vocab[indexes[0]]
+		print(theme)
+		return theme
 	
-	def transformTheme(self, data):
-		return
+	def transformTheme(self, theme):
+		indexes, sim = self.model.analogy(pos=[], neg=[theme])
+		theme = self.model.vocab[indexes[0]]
+		print(theme)
+		return theme
 	
 	def getRhymeScheme(self, data):
 		return
@@ -64,7 +77,7 @@ class Alvin:
 		rhymeScheme = self.getRhymeScheme(data)
 		transformedText = []
 		for line in data:
-			meter = self.getMeter(data)
+			meter = self.getMeter(line)
 			editedLine = ""
 			for word in line.split(" "):
 				if self.isWordImportant(word):
