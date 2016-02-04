@@ -1,3 +1,4 @@
+import random
 import os
 import string
 from stop_words import get_stop_words
@@ -9,7 +10,7 @@ class Alvin:
 	def __init__(self):
 		self.inspirationSet = []
 		self.stopWords = get_stop_words('en')
-		self.model = word2vec.load('./text8.bin')
+		self.model = word2vec.load('./wikipedia_articles.bin')
 	
 	def LoadInspirationSet(self):
 		inspirationDirectory = "./InspirationSet/"
@@ -36,10 +37,11 @@ class Alvin:
 	def getTheme(self, data):
 		temp = [data[i].split() for i in range(len(data))]
 		temp = [temp[i][j] for i in range(len(temp)) for j in range(len(temp[i]))]
+		temp2 = []
 		for word in temp:
-			if word not in self.model.vocab:
-				temp.remove(word)
-		indexes, sim = self.model.analogy(pos=temp, neg=[])
+			if self.isWordImportant(word) and word in self.model.vocab:
+				temp2.append(word)
+		indexes, sim = self.model.analogy(pos=temp2, neg=[])
 		theme = self.model.vocab[indexes[0]]
 		print(theme)
 		return theme
@@ -57,7 +59,7 @@ class Alvin:
 		ctr = syllableCounter.syllableCounter()
 		a = []
 		for word in data.split(" "):
-			a = a + ctr.getEmphasisOf(word)
+			a.append(ctr.getEmphasisOf(word))
 		return a
 	
 	def isWordImportant(self, data):
@@ -67,7 +69,14 @@ class Alvin:
 			return False
 	
 	def getNewLine(self, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme): #magic happens
-		return
+		newLine = ""
+		for word in editedLine.split():
+			if word == "_":
+				newWord = self.model.vocab[random.randint(0, len(self.model.vocab))]
+				newLine = newLine + " " + newWord
+			else:
+				newLine = newLine + " " + word
+		return newLine.strip()
 	
 	def run(self):
 		self.LoadInspirationSet()
@@ -79,12 +88,15 @@ class Alvin:
 		for line in data:
 			meter = self.getMeter(line)
 			editedLine = ""
-			for word in line.split(" "):
+			for word in line.split():
 				if self.isWordImportant(word):
-					editedLine = editedLine.join(" ".join(word))
+					editedLine = editedLine + " " + word
 				else:
-					editedLine = editedLine.join(" ".join("_"))
-			transformedText.append(self.getNewLine(editedLine, transformedText, rhymeScheme, meter, newTheme, theme))
+					editedLine = editedLine + " _"
+			print(editedLine)
+			transformedText.append(self.getNewLine(editedLine.strip(), transformedText, rhymeScheme, meter, newTheme, theme))
+		print("DONE!")
+		print("")
 		
 		for line in transformedText:
 			print(line)
