@@ -64,9 +64,9 @@ class Alvin:
 	
 	def isWordImportant(self, data):
 		if data in self.stopWords:
-			return True
-		else:
 			return False
+		else:
+			return True
 	
 	def getNewLine(self, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme): #magic happens
 		newLine = ""
@@ -89,7 +89,7 @@ class Alvin:
 			meter = self.getMeter(line)
 			editedLine = ""
 			for word in line.split():
-				if self.isWordImportant(word):
+				if not self.isWordImportant(word):
 					editedLine = editedLine + " " + word
 				else:
 					editedLine = editedLine + " _"
