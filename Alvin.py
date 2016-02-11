@@ -4,13 +4,19 @@ import string
 from stop_words import get_stop_words
 import syllableCounter
 import word2vec
+import nltk
 
 class Alvin:
 	
 	def __init__(self):
+		os.environ['STANFORD_PARSER'] = './stanford-postagger-full-2014-08-27'
+		os.environ['CLASSPATH'] = './stanford-postagger-full-2014-08-27'
+		os.environ['STANFORD_MODELS'] = './stanford-postagger-full-2014-08-27'
+		self.pos = nltk.tag.stanford.StanfordPOSTagger('models/english-bidirectional-distsim.tagger')
 		self.inspirationSet = []
 		self.stopWords = get_stop_words('en')
 		self.model = word2vec.load('./wikipedia_articles.bin')
+		self.ctr = syllableCounter.syllableCounter()
 	
 	def LoadInspirationSet(self):
 		inspirationDirectory = "./InspirationSet/"
@@ -56,10 +62,9 @@ class Alvin:
 		return
 	
 	def getMeter(self, data):
-		ctr = syllableCounter.syllableCounter()
 		a = []
 		for word in data.split(" "):
-			a.append(ctr.getEmphasisOf(word))
+			a.append(self.ctr.getEmphasisOf(word))
 		return a
 	
 	def isWordImportant(self, data):
@@ -68,15 +73,25 @@ class Alvin:
 		else:
 			return True
 	
-	def getNewLine(self, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme): #magic happens
+	def getNewLine(self, PoS, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme): #magic happens
 		newLine = ""
+		allwords = self.ctr.getAllWords()
+		originalPoS = [PoS[i][1] for i in range(len(PoS))]
+		newLine = ""
+		i = 0
 		for word in editedLine.split():
+			newWord = ""
 			if word == "_":
-				newWord = self.model.vocab[random.randint(0, len(self.model.vocab))]
+				#while len(self.getPartOfSpeechTags(newWord)) != 1 or self.getPartOfSpeechTags(newWord)[0][1] != originalPoS[i]:
+				newWord = allwords[random.randint(0, len(allwords))]
 				newLine = newLine + " " + newWord
 			else:
 				newLine = newLine + " " + word
+			i = i + 1
 		return newLine.strip()
+	
+	def getPartOfSpeechTags(self, line):
+		return self.pos.tag(line.split())
 	
 	def run(self):
 		self.LoadInspirationSet()
@@ -86,6 +101,8 @@ class Alvin:
 		rhymeScheme = self.getRhymeScheme(data)
 		transformedText = []
 		for line in data:
+			wordNumber = 0
+			PoS = self.getPartOfSpeechTags(line)
 			meter = self.getMeter(line)
 			editedLine = ""
 			for word in line.split():
@@ -93,14 +110,11 @@ class Alvin:
 					editedLine = editedLine + " " + word
 				else:
 					editedLine = editedLine + " _"
-			print(editedLine)
-			transformedText.append(self.getNewLine(editedLine.strip(), transformedText, rhymeScheme, meter, newTheme, theme))
+				wordNumber = wordNumber + 1
+			#print(editedLine)
+			transformedText.append(self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, newTheme, theme))
 		print("DONE!")
 		print("")
 		
 		for line in transformedText:
-			print(line)
-				
-				
-			
-		
+			print(line)		

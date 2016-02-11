@@ -48,3 +48,9 @@ class syllableCounter:
 			if wordSyllables == syllableCount:
 				words.append(word)
 		return words
+		
+	def getAllWords(self):
+		words = []
+		for word, wordSyllables in self.syllableMap.iteritems():
+			words.append(word)
+		return words
