@@ -5,6 +5,7 @@ from stop_words import get_stop_words
 import syllableCounter
 import word2vec
 import nltk
+from RhymeDictionary import RhymeDictionary
 
 class Alvin:
 	
@@ -17,6 +18,8 @@ class Alvin:
 		self.stopWords = get_stop_words('en')
 		self.model = word2vec.load('./wikipedia_articles.bin')
 		self.ctr = syllableCounter.syllableCounter()
+                self.rhymeDictionary = RhymeDictionary()
+                self.rhymeDictionary.getRhymeFiles()
 	
 	def LoadInspirationSet(self):
 		inspirationDirectory = "./InspirationSet/"
