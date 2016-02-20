@@ -19,7 +19,7 @@ class Alvin:
 		self.model = word2vec.load('./wikipedia_articles.bin')
 		self.ctr = syllableCounter.syllableCounter()
                 self.rhymeDictionary = RhymeDictionary()
-                self.rhymeDictionary.getRhymeFiles()
+                self.rhymeDictionary.loadRhymeFiles()
 	
 	def LoadInspirationSet(self):
 		inspirationDirectory = "./InspirationSet/"
@@ -120,4 +120,11 @@ class Alvin:
 		print("")
 		
 		for line in transformedText:
-			print(line)		
+			print(line)
+
+if __name__ == '__main__':
+        print "here"
+        a = Alvin()
+        print "loaded Alvin"
+        a.run()
+        print "ran"
