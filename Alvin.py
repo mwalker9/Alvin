@@ -62,7 +62,14 @@ class Alvin:
 		return theme
 	
 	def getRhymeScheme(self, data):
-		return
+		lastWords = [line.split()[len(line.split()) - 1] for line in data]
+		rhymeScheme = [i for i in range(len(lastWords))]
+		for i in range(len(lastWords)):
+			if rhymeScheme[i] == i:
+				for j in range(i+1, len(lastWords)):
+					if self.ctr.doWordsRhyme(lastWords[i], lastWords[j]):
+						rhymeScheme[j] = i
+		return rhymeScheme
 	
 	def getMeter(self, data):
 		a = []
