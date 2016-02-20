@@ -18,8 +18,8 @@ class Alvin:
 		self.stopWords = get_stop_words('en')
 		self.model = word2vec.load('./wikipedia_articles.bin')
 		self.ctr = syllableCounter.syllableCounter()
-                self.rhymeDictionary = RhymeDictionary()
-                self.rhymeDictionary.loadRhymeFiles()
+		self.rhymeDictionary = RhymeDictionary()
+		self.rhymeDictionary.loadRhymeFiles()
 	
 	def LoadInspirationSet(self):
 		inspirationDirectory = "./InspirationSet/"
@@ -123,8 +123,7 @@ class Alvin:
 			print(line)
 
 if __name__ == '__main__':
-        print "here"
-        a = Alvin()
-        print "loaded Alvin"
-        a.run()
-        print "ran"
+		print "Loading Alvin..."
+		a = Alvin()
+		print "Running..."
+		a.run()
