@@ -83,7 +83,7 @@ class Alvin:
 		else:
 			return True
 	
-	def getNewLine(self, PoS, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme): #magic happens
+	def getNewLine(self, PoS, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme, currentLineNumber): #magic happens
 		newLine = ""
 		allwords = self.ctr.getAllWords()
 		originalPoS = [PoS[i][1] for i in range(len(PoS))]
@@ -92,8 +92,16 @@ class Alvin:
 		for word in editedLine.split():
 			newWord = ""
 			if word == "_":
-				#while len(self.getPartOfSpeechTags(newWord)) != 1 or self.getPartOfSpeechTags(newWord)[0][1] != originalPoS[i]:
-				newWord = allwords[random.randint(0, len(allwords))]
+				if i == len(editedLine.split())-1 and rhymeScheme[currentLineNumber] != currentLineNumber:
+					transformedLineBefore = transformedText[rhymeScheme[currentLineNumber]]
+					wordToRhyme = transformedLineBefore.split()[len(transformedLineBefore.split())-1]
+					newWord = self.rhymeDictionary.getRhymes(wordToRhyme)[0]
+				elif i == len(editedLine.split()) - 1:
+					newWord = ""
+					while not self.rhymeDictionary.wordList.has_key(newWord):
+						newWord = allwords[random.randint(0, len(allwords))]
+				else:
+					newWord = allwords[random.randint(0, len(allwords))]
 				newLine = newLine + " " + newWord
 			else:
 				newLine = newLine + " " + word
@@ -116,16 +124,15 @@ class Alvin:
 			meter = self.getMeter(line)
 			editedLine = ""
 			for word in line.split():
-				if not self.isWordImportant(word):
+				if not self.isWordImportant(word) and (wordNumber != len(line.split()) - 1 or rhymeScheme[data.index(line)] == data.index(line)):
 					editedLine = editedLine + " " + word
 				else:
 					editedLine = editedLine + " _"
 				wordNumber = wordNumber + 1
-			#print(editedLine)
-			transformedText.append(self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, newTheme, theme))
+			transformedText.append(self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, newTheme, theme, data.index(line)))
 		print("DONE!")
 		print("")
-		
+
 		for line in transformedText:
 			print(line)
 
