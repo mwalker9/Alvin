@@ -56,9 +56,12 @@ class Alvin:
 		return theme
 	
 	def transformTheme(self, theme):
-		indexes, sim = self.model.analogy(pos=[], neg=[theme])
-		theme = self.model.vocab[indexes[0]]
-		print(theme)
+		numberOfThemes = 3
+		allwords = self.ctr.getAllWords()
+		for i in range(numberOfThemes):
+			indexes, sim = self.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
+			theme = self.model.vocab[indexes[0]]
+			print(theme)
 		return theme
 	
 	def getRhymeScheme(self, data):
@@ -95,13 +98,14 @@ class Alvin:
 				if i == len(editedLine.split())-1 and rhymeScheme[currentLineNumber] != currentLineNumber:
 					transformedLineBefore = transformedText[rhymeScheme[currentLineNumber]]
 					wordToRhyme = transformedLineBefore.split()[len(transformedLineBefore.split())-1]
-					newWord = self.rhymeDictionary.getRhymes(wordToRhyme)[0]
+					rhymes = self.rhymeDictionary.getRhymes(wordToRhyme)
+					newWord = rhymes[random.randint(0, len(rhymes)-1)]
 				elif i == len(editedLine.split()) - 1:
 					newWord = ""
 					while not self.rhymeDictionary.wordList.has_key(newWord):
-						newWord = allwords[random.randint(0, len(allwords))]
+						newWord = allwords[random.randint(0, len(allwords)-1)]
 				else:
-					newWord = allwords[random.randint(0, len(allwords))]
+					newWord = allwords[random.randint(0, len(allwords)-1)]
 				newLine = newLine + " " + newWord
 			else:
 				newLine = newLine + " " + word
