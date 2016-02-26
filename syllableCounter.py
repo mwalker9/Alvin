@@ -21,6 +21,7 @@ class syllableCounter:
 					emphasisStr = emphasisStr.replace("2", "1")
 					emphasis = [int(s) for s in emphasisStr if s.isdigit()]
 					keyWord = cleaned.split()[0].translate(string.maketrans("",""), string.punctuation)
+					keyWord = ''.join([i for i in keyWord if not i.isdigit()])
 					self.emphasisMap[keyWord] = emphasis
 					emphasisVowel = None
 					cleaned = ' '.join(cleaned.split()[1::])
@@ -55,7 +56,7 @@ class syllableCounter:
 		words = []
 		for word, wordEmphasis in self.emphasisMap.iteritems():
 			if wordEmphasis == emphasis:
-				words.append(word)
+				words.append(word.lower())
 		return words
 		
 	def getWordsWithSyllableCount(self, syllableCount):

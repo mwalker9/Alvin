@@ -5,6 +5,7 @@ from stop_words import get_stop_words
 import syllableCounter
 import word2vec
 import nltk
+import numpy as np
 from RhymeDictionary import RhymeDictionary
 
 class Alvin:
@@ -59,9 +60,12 @@ class Alvin:
 		numberOfThemes = 3
 		allwords = self.ctr.getAllWords()
 		for i in range(numberOfThemes):
-			indexes, sim = self.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
-			theme = self.model.vocab[indexes[0]]
-			print(theme)
+			try:
+				indexes, sim = self.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
+				theme = self.model.vocab[indexes[0]]
+				print(theme)
+			except KeyError:
+				i = i - 1
 		return theme
 	
 	def getRhymeScheme(self, data):
@@ -76,7 +80,7 @@ class Alvin:
 	
 	def getMeter(self, data):
 		a = []
-		for word in data.split(" "):
+		for word in data.split():
 			a.append(self.ctr.getEmphasisOf(word))
 		return a
 	
@@ -95,10 +99,14 @@ class Alvin:
 		for word in editedLine.split():
 			newWord = ""
 			if word == "_":
+				allwords = self.ctr.getWordsWithEmphasis(meter[i])
 				if i == len(editedLine.split())-1 and rhymeScheme[currentLineNumber] != currentLineNumber:
 					transformedLineBefore = transformedText[rhymeScheme[currentLineNumber]]
 					wordToRhyme = transformedLineBefore.split()[len(transformedLineBefore.split())-1]
 					rhymes = self.rhymeDictionary.getRhymes(wordToRhyme)
+					rhymes.append(wordToRhyme)
+					if len(set(allwords) & set(rhymes)) > 0:
+						rhymes = list(set(allwords) & set(rhymes))
 					newWord = rhymes[random.randint(0, len(rhymes)-1)]
 				elif i == len(editedLine.split()) - 1:
 					newWord = ""
