@@ -52,7 +52,7 @@ class Alvin:
 			if self.isWordImportant(word) and word in self.model.vocab:
 				temp2.append(word)
 		indexes, sim = self.model.analogy(pos=temp2, neg=[])
-		theme = self.model.vocab[indexes[0]]
+		theme = self.model.vocab[indexes[random.randint(0,9)]]
 		print(theme)
 		return theme
 	
