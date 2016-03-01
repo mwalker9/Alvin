@@ -66,13 +66,13 @@ class Alvin:
 		numberOfThemes = 3
 		allwords = self.ctr.getAllWords()
 		themes = []
-		for i in range(numberOfThemes):
+		while(len(themes) < numberOfThemes):
 			try:
 				indexes, sim = self.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
 				theme = self.model.vocab[indexes[0]]
 				themes.append(theme)
 			except KeyError:
-				i = i - 1
+				print("FINE: Error on theme")
 		return themes
 	
 	def getRhymeScheme(self, data):
