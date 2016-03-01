@@ -100,13 +100,19 @@ class Alvin:
 			newWord = ""
 			if word == "_":
 				allwords = self.ctr.getWordsWithEmphasis(meter[i])
+				# if we are at the last word and the current line is not the first rhyming line in the series. ie [0,0,2,2] index != 1 || index != 3
 				if i == len(editedLine.split())-1 and rhymeScheme[currentLineNumber] != currentLineNumber:
+					# we retrieve the first line in the current ryhme series. ie [['hi', 'guys'],['burgers', 'fries'], ['spies', 'lies']], we would retrieve ['hi', 'guys']
 					transformedLineBefore = transformedText[rhymeScheme[currentLineNumber]]
+					# retrieve the last word from transformedLineBefore
 					wordToRhyme = transformedLineBefore.split()[len(transformedLineBefore.split())-1]
+					# retrieve all the rhyming words
 					rhymes = self.rhymeDictionary.getRhymes(wordToRhyme)
 					rhymes.append(wordToRhyme)
 					if len(set(allwords) & set(rhymes)) > 0:
+						# combine the rhyming words with the words that have the proper meter
 						rhymes = list(set(allwords) & set(rhymes))
+					# randomly select a word from this concatenated list; may not necessarily rhyme
 					newWord = rhymes[random.randint(0, len(rhymes)-1)]
 				elif i == len(editedLine.split()) - 1:
 					newWord = ""
@@ -136,9 +142,12 @@ class Alvin:
 			meter = self.getMeter(line)
 			editedLine = ""
 			for word in line.split():
+				# if a stop word and not the last word of the line or is the last word of a line and is the seed rhyme word
 				if not self.isWordImportant(word) and (wordNumber != len(line.split()) - 1 or rhymeScheme[data.index(line)] == data.index(line)):
+					# we add the stop word or a word in the case that it is the last word of the line
 					editedLine = editedLine + " " + word
 				else:
+					# mark the space as needing to be replaced in the future
 					editedLine = editedLine + " _"
 				wordNumber = wordNumber + 1
 			transformedText.append(self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, newTheme, theme, data.index(line)))
