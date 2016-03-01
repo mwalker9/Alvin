@@ -22,6 +22,12 @@ class Alvin:
 		self.rhymeDictionary = RhymeDictionary()
 		self.rhymeDictionary.loadRhymeFiles()
 	
+	def get_cosine_similarity(self, first_word, second_word):
+		try:
+			return np.dot(self.model[first_word], self.model[second_word])/np.linalg.norm(self.model[first_word]) * np.linalg.norm(self.model[second_word])
+		except KeyError:
+			return 0
+	
 	def LoadInspirationSet(self):
 		inspirationDirectory = "./InspirationSet/"
 		for file in os.listdir(inspirationDirectory):
@@ -59,14 +65,15 @@ class Alvin:
 	def transformTheme(self, theme):
 		numberOfThemes = 3
 		allwords = self.ctr.getAllWords()
+		themes = []
 		for i in range(numberOfThemes):
 			try:
 				indexes, sim = self.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
 				theme = self.model.vocab[indexes[0]]
-				print(theme)
+				themes.append(theme)
 			except KeyError:
 				i = i - 1
-		return theme
+		return themes
 	
 	def getRhymeScheme(self, data):
 		lastWords = [line.split()[len(line.split()) - 1] for line in data]
@@ -113,13 +120,23 @@ class Alvin:
 						# combine the rhyming words with the words that have the proper meter
 						rhymes = list(set(allwords) & set(rhymes))
 					# randomly select a word from this concatenated list; may not necessarily rhyme
-					newWord = rhymes[random.randint(0, len(rhymes)-1)]
+					similarity = []
+					for word in rhymes:
+						similarity.append(abs(self.get_cosine_similarity(word, newTheme)))
+					similarity = similarity / sum(similarity)
+					index = np.argmax(np.random.multinomial(1, similarity))
+					newWord = rhymes[index]
 				elif i == len(editedLine.split()) - 1:
 					newWord = ""
 					while not self.rhymeDictionary.wordList.has_key(newWord):
 						newWord = allwords[random.randint(0, len(allwords)-1)]
 				else:
-					newWord = allwords[random.randint(0, len(allwords)-1)]
+					similarity = []
+					for word in allwords:
+						similarity.append(abs(self.get_cosine_similarity(word, newTheme)))
+					similarity = similarity / sum(similarity)
+					index = np.argmax(np.random.multinomial(1, similarity))
+					newWord = allwords[index]
 				newLine = newLine + " " + newWord
 			else:
 				newLine = newLine + " " + word
@@ -135,27 +152,27 @@ class Alvin:
 		theme = self.getTheme(data)
 		newTheme = self.transformTheme(theme)
 		rhymeScheme = self.getRhymeScheme(data)
-		transformedText = []
-		for line in data:
-			wordNumber = 0
-			PoS = self.getPartOfSpeechTags(line)
-			meter = self.getMeter(line)
-			editedLine = ""
-			for word in line.split():
-				# if a stop word and not the last word of the line or is the last word of a line and is the seed rhyme word
-				if not self.isWordImportant(word) and (wordNumber != len(line.split()) - 1 or rhymeScheme[data.index(line)] == data.index(line)):
-					# we add the stop word or a word in the case that it is the last word of the line
-					editedLine = editedLine + " " + word
-				else:
-					# mark the space as needing to be replaced in the future
-					editedLine = editedLine + " _"
-				wordNumber = wordNumber + 1
-			transformedText.append(self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, newTheme, theme, data.index(line)))
-		print("DONE!")
-		print("")
-
-		for line in transformedText:
-			print(line)
+		for theme in newTheme:
+			transformedText = []
+			for line in data:
+				wordNumber = 0
+				PoS = self.getPartOfSpeechTags(line)
+				meter = self.getMeter(line)
+				editedLine = ""
+				for word in line.split():
+					# if a stop word and not the last word of the line or is the last word of a line and is the seed rhyme word
+					if not self.isWordImportant(word) and (wordNumber != len(line.split()) - 1 or rhymeScheme[data.index(line)] == data.index(line)):
+						# we add the stop word or a word in the case that it is the last word of the line
+						editedLine = editedLine + " " + word
+					else:
+						# mark the space as needing to be replaced in the future
+						editedLine = editedLine + " _"
+					wordNumber = wordNumber + 1
+				transformedText.append(self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, newTheme[0], theme, data.index(line)))
+			print(theme)
+			for line in transformedText:
+				print(line)
+			print("")
 
 if __name__ == '__main__':
 		print "Loading Alvin..."
