@@ -96,6 +96,51 @@ class Alvin:
 			return False
 		else:
 			return True
+			
+	def Evaluate(self, transformedText, rhymeScheme):
+		
+		# first score each line according to how it conformed to its ryhme scheme
+		linesThatRhymed = 0
+		
+		s = set(rhymeScheme)
+		print 1.0 * len(s) / len(transformedText)
+		
+		for i, line in enumerate(transformedText):
+			text = line.split(' ')
+			# find the original line that this line needs to ryhme with
+			seed = rhymeScheme[i]			
+			
+			# this is the word we are testing to see if it ryhmes with the seed line
+			wordThatShouldRhyme = text[-1]
+			
+			# seed word
+			seedWord = transformedText[seed].split(' ')[-1]
+			
+			# if the word is the seed line, we count it as a rhymed line and move on to the next word
+			if i == seed:
+				linesThatRhymed += 1
+				continue
+				
+			# we will also allow the words to be the same
+			if wordThatShouldRhyme == seedWord:
+				linesThatRhymed += 1
+				continue
+			
+			# get the set of ryhmed words that ryhme with the original line
+			# eg
+			# 0 hi you
+			# 1 hello world
+			# if seed == 0, then rhymedWords = ['true', 'blue', ...]
+			rhymedWords = []
+			try:
+				rhymedWords = self.rhymeDictionary.getRhymes(seedWord)
+			except:
+				# the seed word was not found in the rhyme dictionary
+				continue
+			if wordThatShouldRhyme in rhymedWords:
+				linesThatRhymed += 1
+				
+		# Caution: Currently under construction and experiencing technical difficulties
 	
 	def getNewLine(self, PoS, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme, currentLineNumber): #magic happens
 		newLine = ""
