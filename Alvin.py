@@ -122,7 +122,10 @@ class Alvin:
 					# randomly select a word from this concatenated list; may not necessarily rhyme
 					similarity = []
 					for word in rhymes:
-						similarity.append(abs(self.get_cosine_similarity(word, newTheme)))
+						similarity.append(self.get_cosine_similarity(word, newTheme))
+					similarity = np.asarray(similarity)
+					if similarity.min() < 0:
+						similarity = similarity - similarity.min()
 					similarity = similarity / sum(similarity)
 					index = np.argmax(np.random.multinomial(1, similarity))
 					newWord = rhymes[index]
@@ -133,7 +136,10 @@ class Alvin:
 				else:
 					similarity = []
 					for word in allwords:
-						similarity.append(abs(self.get_cosine_similarity(word, newTheme)))
+						similarity.append(self.get_cosine_similarity(word, newTheme))
+					similarity = np.asarray(similarity)
+					if similarity.min() < 0:
+						similarity = similarity - similarity.min()
 					similarity = similarity / sum(similarity)
 					index = np.argmax(np.random.multinomial(1, similarity))
 					newWord = allwords[index]
