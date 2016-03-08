@@ -7,6 +7,7 @@ import word2vec
 import nltk
 import numpy as np
 from RhymeDictionary import RhymeDictionary
+from robotbrain import RobotBrain
 
 class Alvin:
 	
@@ -21,6 +22,7 @@ class Alvin:
 		self.ctr = syllableCounter.syllableCounter()
 		self.rhymeDictionary = RhymeDictionary()
 		self.rhymeDictionary.loadRhymeFiles()
+		self.robotBrain = RobotBrain()
 	
 	def get_cosine_similarity(self, first_word, second_word):
 		try:
