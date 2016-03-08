@@ -8,6 +8,7 @@ import nltk
 import numpy as np
 from RhymeDictionary import RhymeDictionary
 from robotbrain import RobotBrain
+import pickle
 
 class Alvin:
 	
@@ -70,8 +71,10 @@ class Alvin:
 		while(len(themes) < numberOfThemes):
 			try:
 				indexes, sim = self.robotBrain.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
-				theme = self.robotBrain.model.vocab[indexes[0]]
-				themes.append(theme)
+				for word in self.robotBrain.model.vocab[indexes]:
+					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 15000:
+						themes.append(word)
+						break
 			except KeyError:
 				print("FINE: Error on theme")
 		return themes
@@ -229,6 +232,7 @@ class Alvin:
 			for line in transformedText:
 				print(line)
 			print("")
+			#pickle.dump(transformedText, open(str(theme)+"text.pickle", "wb"))
 
 if __name__ == '__main__':
 		print "Loading Alvin..."
