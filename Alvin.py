@@ -18,15 +18,14 @@ class Alvin:
 		self.pos = nltk.tag.stanford.StanfordPOSTagger('models/english-bidirectional-distsim.tagger')
 		self.inspirationSet = []
 		self.stopWords = get_stop_words('en')
-		self.model = word2vec.load('./wikipedia_articles.bin')
 		self.ctr = syllableCounter.syllableCounter()
 		self.rhymeDictionary = RhymeDictionary()
 		self.rhymeDictionary.loadRhymeFiles()
 		self.robotBrain = RobotBrain()
 	
-	def get_cosine_similarity(self, first_word, second_word):
+	def get_cosine_similarity(self, word1, word2):
 		try:
-			return np.dot(self.model[first_word], self.model[second_word])/np.linalg.norm(self.model[first_word]) * np.linalg.norm(self.model[second_word])
+			return self.robotBrain.get_cosine_similarity(word1, word2)
 		except KeyError:
 			return 0
 	
@@ -57,10 +56,10 @@ class Alvin:
 		temp = [temp[i][j] for i in range(len(temp)) for j in range(len(temp[i]))]
 		temp2 = []
 		for word in temp:
-			if self.isWordImportant(word) and word in self.model.vocab:
+			if self.isWordImportant(word) and word in self.robotBrain.model.vocab:
 				temp2.append(word)
-		indexes, sim = self.model.analogy(pos=temp2, neg=[])
-		theme = self.model.vocab[indexes[random.randint(0,9)]]
+		indexes, sim = self.robotBrain.model.analogy(pos=temp2, neg=[])
+		theme = self.robotBrain.model.vocab[indexes[random.randint(0,9)]]
 		print(theme)
 		return theme
 	
@@ -70,8 +69,8 @@ class Alvin:
 		themes = []
 		while(len(themes) < numberOfThemes):
 			try:
-				indexes, sim = self.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
-				theme = self.model.vocab[indexes[0]]
+				indexes, sim = self.robotBrain.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
+				theme = self.robotBrain.model.vocab[indexes[0]]
 				themes.append(theme)
 			except KeyError:
 				print("FINE: Error on theme")
@@ -173,7 +172,9 @@ class Alvin:
 					similarity = np.asarray(similarity)
 					if similarity.min() < 0:
 						similarity = similarity - similarity.min()
-					similarity = similarity / sum(similarity)
+					if sum(similarity) == 0:
+						similarity = np.ones(similarity.shape)
+					similarity = similarity / sum(similarity)	
 					index = np.argmax(np.random.multinomial(1, similarity))
 					newWord = rhymes[index]
 				elif i == len(editedLine.split()) - 1:
@@ -187,6 +188,8 @@ class Alvin:
 					similarity = np.asarray(similarity)
 					if similarity.min() < 0:
 						similarity = similarity - similarity.min()
+					if sum(similarity) == 0:
+						similarity = np.ones(similarity.shape)
 					similarity = similarity / sum(similarity)
 					index = np.argmax(np.random.multinomial(1, similarity))
 					newWord = allwords[index]
