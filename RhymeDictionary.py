@@ -18,7 +18,7 @@ class RhymeDictionary:
 			segments = line.split('-')
 			word = segments[0]
 			syllables = segments[1].split(',')
-			wordObject = Word(word, syllables, {})
+			wordObject = Word(word, syllables, [])
 			rhymes_scores = segments[2].replace('\n','').split(',')
 			if len(rhymes_scores) > 1:
 				for rhyme_score in rhymes_scores:
@@ -39,10 +39,8 @@ class RhymeDictionary:
 		wordObject = self.wordList[word]
 		rhymes_dict = wordObject.getRhymes()
 		rhymes = []
-		for x in xrange(1,4000):
-			x = 4000 - x
-			if rhymes_dict.has_key(str(x)):
-				rhymes.append(rhymes_dict.get(str(x)))
+		for RhymeObject in rhymes_dict:
+			rhymes.append(RhymeObject.getRhyme())
 		return rhymes
 
 class Word:
@@ -53,7 +51,7 @@ class Word:
 		self.rhymes = rhymes
 
 	def addRhyme(self, rhyme, score):
-		self.rhymes[score] = rhyme
+		self.rhymes.append(Rhyme(rhyme, score))
 
 	def addSyllables(self, syllables):
 		self.syllables = syllables
@@ -67,9 +65,23 @@ class Word:
 	def getRhymes(self):
 		return self.rhymes
 
+
+class Rhyme:
+
+	def __init__(self, rhyme, score):
+		self.rhyme = rhyme
+		self.score = score
+
+	def getRhyme(self):
+		return self.rhyme
+
+	def getScore(self):
+		return self.score
+
+
 if __name__ == '__main__':
 	d = RhymeDictionary()
 	d.loadRhymeFiles()
-	print 'done'
-#	print d.getRhymes('against')
+#	print 'done'
+#	print d.getRhymes('light')
 
