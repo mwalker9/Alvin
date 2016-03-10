@@ -156,6 +156,9 @@ class Alvin:
 			newWord = ""
 			if word == "_":
 				allwords = self.ctr.getWordsWithEmphasis(meter[i])
+				tempWords = [word for word in allwords if self.robotBrain.get_popularity(word) > 10000]
+				if len(tempWords) != 0:
+					allwords = tempWords
 				# if we are at the last word and the current line is not the first rhyming line in the series. ie [0,0,2,2] index != 1 || index != 3
 				if i == len(editedLine.split())-1 and rhymeScheme[currentLineNumber] != currentLineNumber:
 					# we retrieve the first line in the current ryhme series. ie [['hi', 'guys'],['burgers', 'fries'], ['spies', 'lies']], we would retrieve ['hi', 'guys']
