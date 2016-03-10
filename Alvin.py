@@ -72,7 +72,7 @@ class Alvin:
 			try:
 				indexes, sim = self.robotBrain.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
 				for word in self.robotBrain.model.vocab[indexes]:
-					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 15000:
+					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 50000:
 						themes.append(word)
 						break
 			except KeyError:
