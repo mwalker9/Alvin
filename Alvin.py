@@ -72,7 +72,7 @@ class Alvin:
 			try:
 				indexes, sim = self.robotBrain.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
 				for word in self.robotBrain.model.vocab[indexes]:
-					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 50000:
+					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 75000:
 						themes.append(word)
 						break
 			except KeyError:
@@ -149,16 +149,18 @@ class Alvin:
 	def getNewLine(self, PoS, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme, currentLineNumber): #magic happens
 		newLine = ""
 		allwords = self.ctr.getAllWords()
-		originalPoS = [PoS[i][1] for i in range(len(PoS))]
+		originalPoS = ["_"+PoS[i][1] for i in range(len(PoS))]
 		newLine = ""
 		i = 0
-		for word in editedLine.split():
+		for word, part in zip(editedLine.split(), originalPoS):
 			newWord = ""
 			if word == "_":
 				allwords = self.ctr.getWordsWithEmphasis(meter[i])
-				tempWords = [word for word in allwords if self.robotBrain.get_popularity(word) > 10000]
+				tempWords = [word for word in allwords if self.robotBrain.get_popularity(word) > 50000 and self.robotBrain.get_most_likely_POS_tag(word) == part]
 				if len(tempWords) != 0:
 					allwords = tempWords
+				else:
+					print("failed", meter[i], part)
 				# if we are at the last word and the current line is not the first rhyming line in the series. ie [0,0,2,2] index != 1 || index != 3
 				if i == len(editedLine.split())-1 and rhymeScheme[currentLineNumber] != currentLineNumber:
 					# we retrieve the first line in the current ryhme series. ie [['hi', 'guys'],['burgers', 'fries'], ['spies', 'lies']], we would retrieve ['hi', 'guys']
