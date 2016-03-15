@@ -155,6 +155,10 @@ class Alvin:
 		for word, part in zip(editedLine.split(), originalPoS):
 			newWord = ""
 			if word == "_":
+				if part == "_NNP":
+					part = "_NN"
+				elif part == "_NNPS":
+					part = "_NNS"
 				allwords = self.ctr.getWordsWithEmphasis(meter[i])
 				tempWords = [word for word in allwords if self.robotBrain.get_popularity(word) > 50000 and self.robotBrain.get_most_likely_POS_tag(word) == part]
 				if len(tempWords) != 0:
