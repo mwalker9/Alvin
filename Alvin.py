@@ -72,7 +72,7 @@ class Alvin:
 			try:
 				indexes, sim = self.robotBrain.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
 				for word in self.robotBrain.model.vocab[indexes]:
-					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 75000:
+					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 100000:
 						themes.append(word)
 						break
 			except KeyError:
@@ -160,7 +160,7 @@ class Alvin:
 				elif part == "_NNPS":
 					part = "_NNS"
 				allwords = self.ctr.getWordsWithEmphasis(meter[i])
-				tempWords = [word for word in allwords if self.robotBrain.get_popularity(word) > 50000 and self.robotBrain.get_most_likely_POS_tag(word) == part]
+				tempWords = [word for word in allwords if self.robotBrain.get_popularity(word) > 75000 and self.robotBrain.get_most_likely_POS_tag(word) == part]
 				if len(tempWords) != 0:
 					allwords = tempWords
 				else:
