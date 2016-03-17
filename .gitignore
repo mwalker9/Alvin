@@ -48,3 +48,4 @@ Temporary Items
 *.pyc
 *.bin
 word_tag_distributions.txt
+alchemy/
