@@ -1,3 +1,13 @@
+'''
+popularity limits:
+Only 350 words above 1,000,000
+480 above 750,000
+715 above 500,000
+1427 above 250,000
+1797 above 200,000
+2023 above 175,000
+2730 above 125,000
+'''
 import random
 import os
 import string
@@ -8,6 +18,7 @@ import nltk
 import numpy as np
 from RhymeDictionary import RhymeDictionary
 from robotbrain import RobotBrain
+from nameList import nameList
 import pickle
 
 class Alvin:
@@ -23,6 +34,7 @@ class Alvin:
 		self.rhymeDictionary = RhymeDictionary()
 		self.rhymeDictionary.loadRhymeFiles()
 		self.robotBrain = RobotBrain()
+		self.nameList = nameList()
 	
 	def get_cosine_similarity(self, word1, word2):
 		try:
@@ -72,7 +84,7 @@ class Alvin:
 			try:
 				indexes, sim = self.robotBrain.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
 				for word in self.robotBrain.model.vocab[indexes]:
-					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 100000:
+					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 500000:
 						themes.append(word)
 						break
 			except KeyError:
@@ -160,7 +172,7 @@ class Alvin:
 				elif part == "_NNPS":
 					part = "_NNS"
 				allwords = self.ctr.getWordsWithEmphasis(meter[i])
-				tempWords = [word for word in allwords if self.robotBrain.get_popularity(word) > 75000 and self.robotBrain.get_most_likely_POS_tag(word) == part]
+				tempWords = [word for word in allwords if self.robotBrain.get_popularity(word) > 175000 and word not in self.nameList.names and self.robotBrain.get_most_likely_POS_tag(word) == part]
 				if len(tempWords) != 0:
 					allwords = tempWords
 				else:
