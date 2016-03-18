@@ -40,7 +40,7 @@ class Alvin:
 		try:
 			return self.robotBrain.get_cosine_similarity(word1, word2)
 		except KeyError:
-			return 0
+			return -1
 	
 	def LoadInspirationSet(self):
 		inspirationDirectory = "./InspirationSet/"
@@ -82,6 +82,7 @@ class Alvin:
 		themes = []
 		while(len(themes) < numberOfThemes):
 			try:
+				#perhaps make this a little more robust so we don't just keep getting errors forever
 				indexes, sim = self.robotBrain.model.analogy(pos=[allwords[random.randint(0, len(allwords)-1)]], neg=[theme])
 				for word in self.robotBrain.model.vocab[indexes]:
 					if self.isWordImportant(word) and self.robotBrain.get_popularity(word) > 500000:
