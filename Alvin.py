@@ -20,6 +20,7 @@ from RhymeDictionary import RhymeDictionary
 from robotbrain import RobotBrain
 from nameList import nameList
 import pickle
+import NGrams
 
 class Alvin:
 	
@@ -77,7 +78,7 @@ class Alvin:
 		return theme
 	
 	def transformTheme(self, theme):
-		numberOfThemes = 3
+		numberOfThemes = 1
 		allwords = self.ctr.getAllWords()
 		themes = []
 		while(len(themes) < numberOfThemes):
@@ -113,6 +114,46 @@ class Alvin:
 			return False
 		else:
 			return True
+			
+	def evaluateNGrams(self, transformedText):
+		for line in transformedText:
+			words = line.split(' ')
+			currentOrder = 1
+			index = 0
+			while (index + currentOrder) < len(words):				
+				phrase = []
+				for i in xrange(index, currentOrder + index):
+					phrase.append(words[i])
+				possibleWord = words[i+1]
+				#print phrase, possibleWord, currentOrder+1
+				nGramProbability = NGrams.getProbabilities(phrase, possibleWord, currentOrder)
+				if nGramProbability < -10:
+					return False
+				if currentOrder == 4:
+					index += 1
+				if currentOrder < 4:
+					currentOrder += 1
+		return True
+	
+	def evaluateLine(self, line):
+		print "Evaluating", line
+		words = line.split(' ')
+		currentOrder = 1
+		index = 0
+		while (index + currentOrder) < len(words):				
+			phrase = []
+			for i in xrange(index, currentOrder + index):
+				phrase.append(words[i])
+			possibleWord = words[i+1]
+			#print phrase, possibleWord, currentOrder+1
+			nGramProbability = NGrams.getProbabilities(phrase, possibleWord, currentOrder)
+			if nGramProbability < -20:
+				return False
+			if currentOrder == 4:
+				index += 1
+			if currentOrder < 4:
+				currentOrder += 1
+		return True
 			
 	def Evaluate(self, transformedText, rhymeScheme):
 		
@@ -248,8 +289,11 @@ class Alvin:
 					else:
 						# mark the space as needing to be replaced in the future
 						editedLine = editedLine + " _"
-					wordNumber = wordNumber + 1
-				transformedText.append(self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, newTheme[0], theme, data.index(line)))
+					wordNumber = wordNumber + 
+				while not evaluate:
+					line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, newTheme[0], theme, data.index(line))
+					evalution = self.evaluateLine(line)
+				transformedText.append(line)
 			print(theme)
 			for line in transformedText:
 				print(line)
