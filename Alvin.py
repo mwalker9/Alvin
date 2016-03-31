@@ -114,26 +114,6 @@ class Alvin:
 			return False
 		else:
 			return True
-			
-	def evaluateNGrams(self, transformedText):
-		for line in transformedText:
-			words = line.split(' ')
-			currentOrder = 1
-			index = 0
-			while (index + currentOrder) < len(words):				
-				phrase = []
-				for i in xrange(index, currentOrder + index):
-					phrase.append(words[i])
-				possibleWord = words[i+1]
-				#print phrase, possibleWord, currentOrder+1
-				nGramProbability = NGrams.getProbabilities(phrase, possibleWord, currentOrder)
-				if nGramProbability < -10:
-					return False
-				if currentOrder == 4:
-					index += 1
-				if currentOrder < 4:
-					currentOrder += 1
-		return True
 	
 	def evaluateLine(self, line):
 		print "Evaluating", line
@@ -141,13 +121,15 @@ class Alvin:
 		currentOrder = 1
 		index = 0
 		while (index + currentOrder) < len(words):				
-			phrase = []
+			phrase = ""
 			for i in xrange(index, currentOrder + index):
-				phrase.append(words[i])
+				phrase = phrase + " " + words[i]
+			phrase = phrase.strip()
 			possibleWord = words[i+1]
 			#print phrase, possibleWord, currentOrder+1
-			nGramProbability = NGrams.getProbabilities(phrase, possibleWord, currentOrder)
-			if nGramProbability < -20:
+			nGramMap = NGrams.getProbabilities(phrase, [possibleWord], currentOrder+1) #returns an array of maps -- need to convert
+			nGramProbability = nGramMap[0]["probability"]
+			if nGramProbability < -5:
 				return False
 			if currentOrder == 4:
 				index += 1
@@ -274,24 +256,25 @@ class Alvin:
 		theme = self.getTheme(data)
 		newTheme = self.transformTheme(theme)
 		rhymeScheme = self.getRhymeScheme(data)
-		for theme in newTheme:
+		for currentTheme in newTheme:
 			transformedText = []
-			for line in data:
+			for line, lineNumber in zip(data, range(len(data))):
 				wordNumber = 0
 				PoS = self.getPartOfSpeechTags(line)
 				meter = self.getMeter(line)
 				editedLine = ""
 				for word in line.split():
 					# if a stop word and not the last word of the line or is the last word of a line and is the seed rhyme word
-					if not self.isWordImportant(word) and (wordNumber != len(line.split()) - 1 or rhymeScheme[data.index(line)] == data.index(line)):
+					if not self.isWordImportant(word) and (wordNumber != len(line.split()) - 1 or rhymeScheme[lineNumber] == lineNumber):
 						# we add the stop word or a word in the case that it is the last word of the line
 						editedLine = editedLine + " " + word
 					else:
 						# mark the space as needing to be replaced in the future
 						editedLine = editedLine + " _"
-					wordNumber = wordNumber + 
-				while not evaluate:
-					line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, newTheme[0], theme, data.index(line))
+					wordNumber = wordNumber + 1
+				evaluation = False
+				while not evaluation:
+					line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, currentTheme, theme, lineNumber)
 					evalution = self.evaluateLine(line)
 				transformedText.append(line)
 			print(theme)

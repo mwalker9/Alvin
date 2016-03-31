@@ -57,8 +57,14 @@ def getProbabilities(phrase, possibleWords, order=5):
 	except Exception as e:
 		print("Error occurred in NGrams")
 		return -1
+	
 	parsed_json = json.loads(data)
-	results = parsed_json["results"]
+	try:
+		results = parsed_json["results"]
+	except KeyError:
+		print("Error occurred")
+		print(data)
+		return -1000
 	finalResults = []
 	for map in results:
 		newMap = {}
