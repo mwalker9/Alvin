@@ -129,6 +129,7 @@ class Alvin:
 			#print phrase, possibleWord, currentOrder+1
 			nGramMap = NGrams.getProbabilities(phrase, [possibleWord], currentOrder+1) #returns an array of maps -- need to convert
 			nGramProbability = nGramMap[0]["probability"]
+			#print phrase, possibleWord, nGramProbability
 			if nGramProbability < -5:
 				return False
 			if currentOrder == 4:
