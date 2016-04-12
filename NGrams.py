@@ -1,6 +1,8 @@
 ########### Python 2.7 #############
 import httplib, urllib, base64, json
 import time
+import copy
+import numpy as np
 
 def generateBody(phrase, possibleWords):
 	queries = []
@@ -16,6 +18,9 @@ def generateBody(phrase, possibleWords):
 	)
 		
 def getProbabilities(phrase, possibleWords, order=5):
+	if len(possibleWords) == 0:
+		print("length is zero!!")
+		return []
 	key = ""
 	with open("key.txt", "r") as f:
 		for line in f:
@@ -72,3 +77,24 @@ def getProbabilities(phrase, possibleWords, order=5):
 		newMap["probability"] = map["probability"]
 		finalResults.append(newMap)
 	return finalResults
+	
+def getNGramProbabilities(currentLine, possibleWords):
+	if currentLine == "":
+		return np.ones(len(possibleWords)) / float(len(possibleWords))
+	numberOfWords = len(currentLine.split())
+	numberToTakeOffFront = max(0, numberOfWords-4)
+	phrase = copy.copy(currentLine)
+	for i in range(numberToTakeOffFront):
+		phrase = phrase.split(' ', 1)[1]
+	arrOfMaps = getProbabilities(phrase, possibleWords)
+	probabilities = []
+	for word in possibleWords:
+		found = False
+		for map in arrOfMaps:
+			if map["word"] == word and not found:
+				probabilities.append(np.exp(map["probability"]))
+				found = True
+		if not found:
+			probabilities.append(0)
+	return probabilities/sum(probabilities)
+	

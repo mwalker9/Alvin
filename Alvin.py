@@ -130,7 +130,7 @@ class Alvin:
 			nGramMap = NGrams.getProbabilities(phrase, [possibleWord], currentOrder+1) #returns an array of maps -- need to convert
 			nGramProbability = nGramMap[0]["probability"]
 			#print phrase, possibleWord, nGramProbability
-			if nGramProbability < -5:
+			if nGramProbability < -3.75:
 				return False
 			if currentOrder == 4:
 				index += 1
@@ -180,8 +180,6 @@ class Alvin:
 				continue
 			if wordThatShouldRhyme in rhymedWords:
 				linesThatRhymed += 1
-				
-		# Caution: Currently under construction and experiencing technical difficulties
 	
 	def getNewLine(self, PoS, editedLine, transformedText, rhymeScheme, meter, newTheme, oldTheme, currentLineNumber): #magic happens
 		newLine = ""
@@ -202,6 +200,9 @@ class Alvin:
 					allwords = tempWords
 				else:
 					print("failed", meter[i], part)
+					newLine = newLine + allwords[random.randint(0, len(allwords)-1)]
+					i = i + 1
+					continue
 				# if we are at the last word and the current line is not the first rhyming line in the series. ie [0,0,2,2] index != 1 || index != 3
 				if i == len(editedLine.split())-1 and rhymeScheme[currentLineNumber] != currentLineNumber:
 					# we retrieve the first line in the current ryhme series. ie [['hi', 'guys'],['burgers', 'fries'], ['spies', 'lies']], we would retrieve ['hi', 'guys']
@@ -223,8 +224,15 @@ class Alvin:
 						similarity = similarity - similarity.min()
 					if sum(similarity) == 0:
 						similarity = np.ones(similarity.shape)
-					similarity = similarity / sum(similarity)	
+					similarity = similarity / sum(similarity)
+					if newLine != "" or currentLineNumber == 0:
+						probabilities = NGrams.getNGramProbabilities(newLine, rhymes)
+					else:
+						probabilities = NGrams.getNGramProbabilities(transformedText[currentLineNumber-1], rhymes)
+					similarity = (similarity + 4 * probabilities) / 5.
 					index = np.argmax(np.random.multinomial(1, similarity))
+					while similarity[index] < 1./len(similarity):
+						index = np.argmax(np.random.multinomial(1, similarity))
 					newWord = rhymes[index]
 				elif i == len(editedLine.split()) - 1:
 					newWord = ""
@@ -240,7 +248,14 @@ class Alvin:
 					if sum(similarity) == 0:
 						similarity = np.ones(similarity.shape)
 					similarity = similarity / sum(similarity)
+					if newLine != "" or currentLineNumber == 0:
+						probabilities = NGrams.getNGramProbabilities(newLine, allwords)
+					else:
+						probabilities = NGrams.getNGramProbabilities(transformedText[currentLineNumber-1], allwords)
+					similarity = (similarity + 4 * probabilities) / 5.
 					index = np.argmax(np.random.multinomial(1, similarity))
+					while similarity[index] < 1./len(similarity):
+						index = np.argmax(np.random.multinomial(1, similarity))
 					newWord = allwords[index]
 				newLine = newLine + " " + newWord
 			else:
@@ -266,7 +281,7 @@ class Alvin:
 				editedLine = ""
 				for word in line.split():
 					# if a stop word and not the last word of the line or is the last word of a line and is the seed rhyme word
-					if not self.isWordImportant(word) and (wordNumber != len(line.split()) - 1 or rhymeScheme[lineNumber] == lineNumber):
+					if False and not self.isWordImportant(word) and (wordNumber != len(line.split()) - 1 or rhymeScheme[lineNumber] == lineNumber):
 						# we add the stop word or a word in the case that it is the last word of the line
 						editedLine = editedLine + " " + word
 					else:
@@ -274,11 +289,11 @@ class Alvin:
 						editedLine = editedLine + " _"
 					wordNumber = wordNumber + 1
 				evaluation = False
-				while not evaluation:
-					line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, currentTheme, theme, lineNumber)
-					evalution = self.evaluateLine(line)
+				#while not evaluation:
+				line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, currentTheme, theme, lineNumber)
+				#	evalution = self.evaluateLine(line)
 				transformedText.append(line)
-			print(theme)
+			print(currentTheme)
 			for line in transformedText:
 				print(line)
 			print("")
