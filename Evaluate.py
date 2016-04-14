@@ -86,7 +86,7 @@ def validateText(textPath, pathsPath, rulePath):
 	
 		
 def fakeInspirationToToyData():
-	path = 'C:\Users\jkjohnson\Desktop\Alvin-master\InspirationSet\\FakeInspirationII.txt'
+	path = '.\InspirationSet\\FakeInspirationII.txt'
 	f = open(path, 'r')
 	
 	text = ''
@@ -96,7 +96,7 @@ def fakeInspirationToToyData():
 		
 	f.close()
 	
-	path = 'C:\Users\jkjohnson\Desktop\Alvin-master\\InspirationSet\\toyData.txt'
+	path = '.\InspirationSet\\toyData.txt'
 	f = open(path, 'w')
 	f.write(text)
 	f.close()
@@ -113,7 +113,7 @@ def defineRules(path):
 	valuations = []
 	
 	for i, line in enumerate(text): # 78,79,57,58
-		f = open('C:\Users\jkjohnson\Desktop\Alvin-master\InspirationSet\FakeInspirationII.txt', 'ab')
+		f = open('.\InspirationSet\FakeInspirationII.txt', 'ab')
 		needsCorrection = True
 		moreRules = True		
 		while needsCorrection:
@@ -186,14 +186,14 @@ class Evaluator(object):
 		self.minPath = []
 		self.metaPath = []
 		self.minPathLength = 999
-		self.path = 'C:\Users\jkjohnson\Desktop\Alvin-master\InspirationSet\Paths.txt'
-		self.termDPath = 'C:\Users\jkjohnson\Desktop\Alvin-master\InspirationSet\termD.txt'
+		self.path = '.\InspirationSet\Paths.txt'
+		self.termDPath = '.\InspirationSet\termD.txt'
 		self.termD = {}
 		self.ruleList = []
-		self.rulePath = 'C:\Users\jkjohnson\Desktop\Alvin-master\InspirationSet\Rules.txt'
+		self.rulePath = '.\InspirationSet\Rules.txt'
 		
 		# dependency parsers to build parse tree
-		os.environ['JAVA_HOME'] = 'C:/Program Files (x86)/Java/jre1.8.0_65/bin/java.exe'
+		#os.environ['JAVA_HOME'] = 'C:/Program Files (x86)/Java/jre1.8.0_65/bin/java.exe'
 		self.path_to_jar = 'stanford-parser-full-2015-12-09/stanford-parser.jar'
 		self.path_to_models_jar = 'stanford-parser-full-2015-12-09/stanford-parser-3.6.0-models.jar'
 		self.dependencyParser = StanfordDependencyParser(path_to_jar=self.path_to_jar, path_to_models_jar=self.path_to_models_jar)
@@ -491,7 +491,7 @@ class Evaluator(object):
 	def rootParse(self, dependencies):
 
 		# write rules to a document
-		f = open('C:\Users\jkjohnson\Documents\CS 673\Alvin-master\Star Wars Data\Rules.txt', 'ab')
+		f = open('.\Rules.txt', 'ab')
 		
 		# loop through and find triangles
 		for i, (g, r, d) in enumerate(dependencies):
