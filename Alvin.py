@@ -296,7 +296,7 @@ class Alvin:
 					wordNumber = wordNumber + 1
 				evaluation = False
 				iteration = 0
-				while not evaluation or iteration >= 15:
+				while (not evaluation) and (iteration <= 10):
 					line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, currentTheme, theme, lineNumber)
 					evalution = self.eval.evaluateLine(line)
 					iteration += 1
