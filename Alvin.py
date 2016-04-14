@@ -298,6 +298,7 @@ class Alvin:
 				iteration = 0
 				while not evaluation or iteration >= 15:
 					line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, currentTheme, theme, lineNumber)
+					evalution = self.eval.evaluateLine(line)
 					iteration += 1
 				print(iteration)
 				transformedText.append(line)
