@@ -16,7 +16,7 @@ class Tree(object):
 		self.xcompD = {}
 		self.dobjList = []
 		self.termD = {}
-		self.termDPath = 'C:\Users\jkjohnson\Desktop\Alvin-master\InspirationSet\\termD.txt'
+		self.termDPath = '.\InspirationSet\\termD.txt'
 		self.rule = ''
 		
 		
