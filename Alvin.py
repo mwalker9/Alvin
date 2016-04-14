@@ -236,8 +236,12 @@ class Alvin:
 					newWord = rhymes[index]
 				elif i == len(editedLine.split()) - 1:
 					newWord = ""
-					while not self.rhymeDictionary.wordList.has_key(newWord):
-						newWord = allwords[random.randint(0, len(allwords)-1)]
+					possibleWords = [w for w in allwords if self.rhymeDictionary.wordList.has_key(w)]
+					probabilities = np.asarray(NGrams.getNGramProbabilities(newLine, possibleWords))
+					index = np.argmax(np.random.multinomial(1, probabilities))
+					while probabilities[index] < 1./len(probabilities):
+						index = np.argmax(np.random.multinomial(1, probabilities))
+					newWord = possibleWords[index]
 				else:
 					similarity = []
 					for word in allwords:
@@ -293,6 +297,7 @@ class Alvin:
 				line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, currentTheme, theme, lineNumber)
 				#	evalution = self.evaluateLine(line)
 				transformedText.append(line)
+				print(line)
 			print(currentTheme)
 			for line in transformedText:
 				print(line)
