@@ -20,6 +20,7 @@ from RhymeDictionary import RhymeDictionary
 from robotbrain import RobotBrain
 from nameList import nameList
 import pickle
+import Evaluate
 import NGrams
 
 class Alvin:
@@ -36,6 +37,7 @@ class Alvin:
 		self.rhymeDictionary.loadRhymeFiles()
 		self.robotBrain = RobotBrain()
 		self.nameList = nameList()
+		self.eval = Evaluate.Evaluator()
 	
 	def get_cosine_similarity(self, word1, word2):
 		try:
@@ -293,9 +295,11 @@ class Alvin:
 						editedLine = editedLine + " _"
 					wordNumber = wordNumber + 1
 				evaluation = False
-				#while not evaluation:
-				line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, currentTheme, theme, lineNumber)
-				#	evalution = self.evaluateLine(line)
+				iteration = 0
+				while not evaluation or iteration >= 15:
+					line = self.getNewLine(PoS, editedLine.strip(), transformedText, rhymeScheme, meter, currentTheme, theme, lineNumber)
+					iteration += 1
+				print(iteration)
 				transformedText.append(line)
 				print(line)
 			print(currentTheme)
