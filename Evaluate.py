@@ -10,17 +10,20 @@ reload(Tree)
 from copy import copy
 import cPickle
 from time import sleep
+import numpy as np
 
 ################################
 # to do's                     
 #	replace pronouns with proper nouns
 #	concatenate proper nouns
 #	ACL's!!!
-# 	
+#	eliminate redundant rules
+#	while parsing lines, keep track of count of how many times a rule 'works'
+#	That will be the score the tested line gets if it 'passes' 	
+#   Notes: When parsing, make the first node 'free'. That is, you can go directly to the direct object without respect to what it is tied to
 
 # takes the human coded rules and finds relevant paths for them
 # accumulates these paths in a pickled file
-# typically, the path has been toyData.txt
 def train(path):
 
 	f = open(path, 'r')
@@ -30,6 +33,8 @@ def train(path):
 	# clear out the previous file
 	fR = open(eval.path, 'w')
 	fR.close()
+	
+	# record dependents for the termD
 		
 	for i, line in enumerate(f): # 78,79,57,58
 		text = line.strip().split('|')
@@ -39,9 +44,9 @@ def train(path):
 	f.close()
 	
 	# pickle termD
-	eval.termD.setdefault('root', 'relationship')
+	eval.tree.termD['root'] = 'function'
 	f = open(eval.tree.termDPath, 'w')
-	cPickle.dump(eval.termD, f)
+	cPickle.dump(eval.tree.termD, f)
 	f.close()
 
 # creates rules for the database
@@ -49,44 +54,47 @@ def validateText(textPath, pathsPath, rulePath):
 
 	eval = Evaluator()
 	f = open(textPath, 'r')
-	rules = eval.parsePaths(pathsPath)
+	# reset path counts
+	eval.pathCounts = np.zeros(len(eval.learnedPaths)) 
+	print len(eval.pathCounts)
 	
 	for i, line in enumerate(f):
 	
-		line = line.strip()
-		print line	
 		
-		# first derive the tree
-		result = eval.dependencyParser.raw_parse(line)
-		dependencies = result.next()
-		eval.dependencies = list(dependencies.triples())
-				
-		# build the tree
-		eval.buildTrees(eval.dependencies)
 	
-		# now combine compounds
-		eval.combineCompounds()
-		eval.prependAdjectiveWrapper()
+		line = line.strip()
+		#print line
 		
-		# creates the new list of dependencies
-		eval.treeToDependencies()
+		# there are alot of lines that will not produce a parse tree
+		try:
+			eval.processLine(line)
+			sleep(1)
+		except:
+			continue
 		
-		for rule in rules:	
-			print rule
+		for rule in eval.learnedPaths:	
+			#print rule
 			eval.parseRules(rule)
+		
+		if i % 20 == 0:
+			print i, 'num rules', eval.pathCounts.sum()	
+			# accumulate rules into a 'database'
+			f = open(rulePath, 'w')
+			cPickle.dump(eval.ruleList, f)
+			f.close()
+			f = open(eval.pathCountsPath, 'w')
+			cPickle.dump(eval.pathCounts, f)
+			f.close()
+			
+		
 		sleep(2)
 	f.close()
 	
-	# accumulate rules into a 'database'
-	f = open(rulePath, 'w')
-	cPickle.dump(eval.ruleList, f)
-	f.close()
-	
-
+	# save the counts for evaluation	
 	
 		
 def fakeInspirationToToyData():
-	path = '.\InspirationSet\\FakeInspirationII.txt'
+	path = 'C:\Users\jkjohnson\Desktop\Alvin-master\InspirationSet\\PathTrainingData.txt'
 	f = open(path, 'r')
 	
 	text = ''
@@ -96,7 +104,7 @@ def fakeInspirationToToyData():
 		
 	f.close()
 	
-	path = '.\InspirationSet\\toyData.txt'
+	path = 'C:\Users\jkjohnson\Desktop\Alvin-master\\InspirationSet\\toyData.txt'
 	f = open(path, 'w')
 	f.write(text)
 	f.close()
@@ -113,7 +121,16 @@ def defineRules(path):
 	valuations = []
 	
 	for i, line in enumerate(text): # 78,79,57,58
-		f = open('.\InspirationSet\FakeInspirationII.txt', 'ab')
+		f = open('C:\Users\jkjohnson\Desktop\Alvin-master\InspirationSet\FinalTrainingData.txt', 'ab')
+		
+		# first derive the tree
+		eval.processLine(line)	
+		
+		try:
+			print eval.dependencies[0]
+		except:
+			print 'you just may want to skip'
+		
 		needsCorrection = True
 		moreRules = True		
 		while needsCorrection:
@@ -133,21 +150,11 @@ def defineRules(path):
 			repl = raw_input('With what? ')
 			line = line.replace(find, repl)	
 			
+		if not moreRules:
+			continue
+			
 		# first derive the tree
-		result = eval.dependencyParser.raw_parse(line)
-		dependencies = result.next()
-			
-		eval.dependencies = list(dependencies.triples())	
-				
-		# build the tree
-		eval.buildTrees(eval.dependencies)
-
-		# now combine compounds
-		eval.combineCompounds()
-		eval.prependAdjectiveWrapper()
-			
-		# creates the new list of dependencies
-		eval.treeToDependencies()			
+		eval.processLine(line)	
 		
 		for tup in eval.dependencies:
 			print tup
@@ -160,16 +167,6 @@ def defineRules(path):
 				f.close()
 				continue
 			line = line + "|" + rule
-		
-		
-		#v, d = eval.textToRules(line)
-		#return v, d
-		#print dependencies
-		#print i, rule
-		#valuations.extend(rule)
-		#return line, dependencies, rule
-	
-	#return valuations
 
 class Evaluator(object):
 	
@@ -187,10 +184,18 @@ class Evaluator(object):
 		self.metaPath = []
 		self.minPathLength = 999
 		self.path = '.\InspirationSet\Paths.txt'
-		self.termDPath = '.\InspirationSet\termD.txt'
-		self.termD = {}
 		self.ruleList = []
 		self.rulePath = '.\InspirationSet\Rules.txt'
+		self.learnedPaths = self.parsePaths(self.path)		
+		self.pathCountsPath = '.\InspirationSet\PathCounts.txt'
+		f = open(self.pathCountsPath,'r')
+		self.trainingPathCounts = cPickle.load(f)
+		self.pathCounts = np.zeros(len(self.learnedPaths))
+		
+		# load in rules
+		f = open(self.rulePath, 'r')
+		self.knownRules = cPickle.load(f)
+		f.close()
 		
 		# dependency parsers to build parse tree
 		#os.environ['JAVA_HOME'] = 'C:/Program Files (x86)/Java/jre1.8.0_65/bin/java.exe'
@@ -209,11 +214,14 @@ class Evaluator(object):
 		#for i in self.dependencies:
 		#	print i
 		
-		# upload paths
-		paths = self.parsePaths(self.path)
+		# reset the  path count numbers
+		self.pathCounts = np.zeros(len(self.learnedPaths))
 		
-		for path in paths:
+		for path in self.learnedPaths:
+			#print path
 			self.parseRules(path)
+			
+		score = (self.pathCounts * self.trainingPathCounts).sum()
 			
 		# upload known rules
 		# observe that we do not need to upload these rules. They were never stored to memory
@@ -222,14 +230,12 @@ class Evaluator(object):
 		f.close()
 		
 		for i in self.ruleList:
-			if i in knownRules:
+			if i in self.knownRules:
 				#print i
-				#print 'hurray!'
-				return True
-		return False
-		
-		
+				score += 100
 	
+		return score
+		
 	# builds and modifies the dependencies
 	def processLine(self, line):
 		# first derive the tree
@@ -243,11 +249,19 @@ class Evaluator(object):
 		# now combine compounds
 		self.combineCompounds()
 		self.prependAdjectiveWrapper()
+		try:
+			self.unificationWrapper()
+		except:
+			print 'unification crashed!'
+			
+		
 		
 		# creates the new list of dependencies
 		self.treeToDependencies()
-			
 		
+		#for i in self.dependencies:
+		#	print i
+			
 	# creates the list of dependencies from the tree
 	def treeToDependencies(self):
 	
@@ -287,7 +301,9 @@ class Evaluator(object):
 		while not eof:
 			
 			try:
-				paths.append(cPickle.load(f))
+				path = cPickle.load(f)
+				if path not in paths:
+					paths.append(path)
 			except:
 				eof = True
 				
@@ -402,7 +418,6 @@ class Evaluator(object):
 			# check to see if it is a compound
 			if child.edge.relationship == 'compound':
 				s += child.value + '_'
-				
 				popL.append(i)
 				
 			else:
@@ -450,6 +465,34 @@ class Evaluator(object):
 		# give the node its full name
 		Node.value = s + Node.value
 		
+	# unifies the {W*} PoS to a noun ancestor and PRP
+	def unificationWrapper(self):		
+		
+		self.unificationPronoun(self.tree.root)
+		self.unificationW(self.tree.root)
+	
+	def unificationPronoun(self, Node):
+		pass
+		
+	def unificationW(self, Node):
+	
+		if Node.type == 'WP':
+			# return node of ancestor whose parent is connected by acl:relcl
+			value, type = self.findRelationship(Node, 'acl:relcl')
+			Node.value = value; Node.type = type
+		elif len(Node.children) == 0:
+			pass
+		else:
+			for child in Node.children:
+				self.unificationW(child)
+		
+	# returns the type and value of a node that is connected to a parent by the specified relationship
+	def findRelationship(self, Node, relationship):
+			if Node.edge.relationship == relationship:
+				return Node.parent.value, Node.parent.type
+			else:
+				return self.findRelationship(Node.parent, relationship)
+			
 		
 	def concatenateCompounds(self, dependencies, governor, parent):
 		# we want to return the last compound
@@ -491,7 +534,7 @@ class Evaluator(object):
 	def rootParse(self, dependencies):
 
 		# write rules to a document
-		f = open('.\Rules.txt', 'ab')
+		f = open('C:\Users\jkjohnson\Documents\CS 673\Alvin-master\Star Wars Data\Rules.txt', 'ab')
 		
 		# loop through and find triangles
 		for i, (g, r, d) in enumerate(dependencies):
@@ -665,26 +708,6 @@ class Evaluator(object):
 			
 		return nodeL, valueL, typeL, relationL
 		
-	# parses all xcomps	
-	def parseXComp(self, dependencies):
-		
-		for i, (g, r, d) in enumerate(dependencies):
-			
-			if r == 'xcomp':
-				
-				# we want the dependent
-				self.tree.findNodeWrapper(d[0], d[1], g[0], r, 'substructures')
-				n = self.tree.foundNode
-				self.tree.xcompD.setdefault(d[0], {})
-				
-				if n.type[0] == 'V':
-					self.tree.xcompD.setdefault(n.value, {'verbConj' : '', 'dobjConj' : ''})
-					
-					for child in n.children:
-						if child.edge.relationship == 'dobj':
-							self.tree.xcompD[n.value]['dobjConj'] = child.value
-						elif child.edge.relationship == 'nmod':
-							self.tree.xcompD[n.value]['verbConj'] = child.value
 							
 	def findParent(self, dependencies, (gV, gT), i):
 	
@@ -697,21 +720,35 @@ class Evaluator(object):
 
 	def parseRules(self, funcList):
 	
-		# load the termD
-		self.tree.loadTermD()
+		f = open(self.tree.termDPath, 'r')
+		self.tree.termD = cPickle.load(f)
+		f.close()
 		
-		self.tree.rule = ''
-		termList = []
+		self.tree.rules = []
 		
-		try:
-	
-			self.tree.parseFunctions(self.tree.root, funcList, termList)
 		
-			if self.tree.rule != '':
-				#print self.tree.rule
-				self.ruleList.append(self.tree.rule)
-		except:
-			pass
+		# free trip to first node
+		self.tree.foundNodes = []
+		self.tree.findNode(self.tree.root, funcList[0])
+		#print len(self.tree.foundNodes)
+		if len(self.tree.foundNodes) > 0:
+			for Node in self.tree.foundNodes:
+				try:
+					termList = []
+					self.tree.parseFunctions(Node, funcList, termList)
+					#print funcList
+				except:
+					pass
+		
+		if self.tree.rules != []:
+			#print self.tree.rule
+			for rule in self.tree.rules:
+				self.pathCounts[self.learnedPaths.index(funcList)] += 1
+				if rule not in self.ruleList:
+					#print 'found!', rule
+					self.ruleList.append(rule)
+				
+		
 		
 	# learns rules in the form of a list of tuples
 	def learnRules(self, line):
@@ -723,31 +760,36 @@ class Evaluator(object):
 		for i in self.dependencies:
 			print i
 		
-		# record dependents for the termD
+		
+		
 		for (g, r, d) in self.dependencies:
-			self.termD.setdefault(d[1], 'type')
-			self.termD.setdefault(r, 'relationship')		
+			self.tree.termD.setdefault(d[1], 'variable')
+			self.tree.termD.setdefault(r, 'function')		
 		
 		# find path for rules
 		for rule in line[1:]:
 		
-			print rule
+			print 'rule',rule
 			
 			rule = rule.replace(')','').split('(')
-			predicate = rule[0]
-			items = rule[1].split(',')
+			predicate = rule[0].replace('[','').replace(']','')
+			items = rule[1].split(', ')
 			
 			sub = None; dob = None
 			if len(items) == 1:
 				sub = items[0]	
 			else:
-				sub = items[0]
-				dob = items[1]
+				sub = items[0].replace('[','').replace(']','').split(','); sub.append('variable')
+				dob = items[1].replace('[','').replace(']','').split(','); dob.append('variable')
 			# go from sub to predicte to dob
 			# start from end of predicate and work towards the front
-			#print predicate, sub, dob
+			# this helps in traversing the tree. You will be going up instead of down most of the time.
+			#print 'sub', sub
+			#print 'dob', dob
 			
 			self.landmarks = self.createString(predicate, sub, dob)
+			#print 'landmarks',self.landmarks
+			#return
 			
 			# clear nodeList
 			self.nodeList = []
@@ -769,59 +811,41 @@ class Evaluator(object):
 		l = []
 		
 		if dob != None:
-			for i in dob.split():
-				tup = (i, 'relationship')
-				l.append(tup)
+			l.append(dob)
 			
 		predicateList = predicate.split('&')
+		
 		# we will approach in reverse order
 		predicateList.reverse()
 		
 		for i in predicateList:
-			tup = (i, 'type')
-			l.append(tup)
+			i = i.split(',')
+			i.append('function')
+			l.append(i)
 			
-		for i in sub.split():
-			tup = (i, 'relationship')
-			l.append(tup)
-			
-		#print l
+		l.append(sub)
 			
 		return l
 			
 	def parseLandmarks(self, Node, landmarks, visitedNodes):
 	
-		# a multi-agent approach to finding the nodes
-		
+		# a multi-agent approach to finding the nodes		
 		
 		# note the node as being visited
 		visitedNodes.append(Node)
 	
 		if len(self.nodeList) == len(self.landmarks):
+			# this signals that all nodes have been found
+			# this will cause all other agents to cease their search also
 			# this is the ideal situation
+			# it means all landmarks have been found
 			return
-			
-		#print Node.value, landmarks[0]
 	
 		# check to see if we have arrived at correct node
-		if landmarks[0][0] == Node.value:
+		if landmarks[0][0] == Node.value and landmarks[0][1] == Node.type and landmarks[0][2] == Node.edge.relationship:
 		
 			if Node not in self.nodeList:
-				self.nodeList.append(Node)
-			
-			# find whether the tuple requires a relationship or type
-			
-			if landmarks[0][1] == 'relationship':
-				print 'relationship'
-				print "(", Node.value, ", ", Node.edge.relationship, ")"			
-								
-			elif landmarks[0][1] == 'type':
-				print 'type'
-				print "(", Node.value, ", ", Node.type, ")"
-				
-			else:
-				print 'we are in trouble!'
-			
+				self.nodeList.append(Node)			
 				
 			# continue to parse the landmarks
 			# search down
@@ -835,32 +859,20 @@ class Evaluator(object):
 			self.parseLandmarks(Node.parent, copy(landmarks[1:]), [])
 			
 		else:
-			# consume the node
-			# this will always be a relationship
-			
-			# continue to parse the landmarks
-			# search down
 			for child in Node.children:
 				if child not in visitedNodes:
 					self.parseLandmarks(child, copy(landmarks), copy(visitedNodes))
 				
 			# search up
-			self.parseLandmarks(Node.parent, copy(landmarks), copy(visitedNodes))
+			if Node.edge.relationship != 'root':
+				self.parseLandmarks(Node.parent, copy(landmarks), copy(visitedNodes))
 			
 	# creates a map that defines the shortest route between each node and the qualities of the nodes
 	def developMap(self):
 	
-		# initiate the minPath
-		if self.landmarks[0][1] == 'relationship':
-			# note this in the termD
-			self.metaPath = [(self.nodeList[0].edge.relationship, 'down', 'node')]
-			
-		elif self.landmarks[0][1] == 'type':
-			# note this in the termD
-			self.metaPath = [(self.nodeList[0].type, 'down', 'node')]				
-				
-		else:
-			print 'we are in big trouble!'
+		# start the free search going down	
+		self.metaPath = [(self.nodeList[0].type, self.nodeList[0].edge.relationship, 'down', \
+							self.landmarks[0][3], 'node')]
 	
 		# find shortest path between each node
 		for i, node in enumerate(self.nodeList[:-1]):		
@@ -883,15 +895,7 @@ class Evaluator(object):
 		if sNode == tNode and len(map) < self.minPathLength:
 			#print 'found it'
 		
-			# index into the nodelist to find the relationship/type
-			if self.landmarks[self.nodeList.index(sNode)][1] == 'relationship':
-				map.append((sNode.edge.relationship, direction, 'node'))
-				
-			elif self.landmarks[self.nodeList.index(sNode)][1] == 'type':
-				map.append((sNode.type, direction, 'node'))
-			
-			else:
-				print 'we are in big trouble!'
+			map.append((sNode.type, sNode.edge.relationship, direction, self.landmarks[self.nodeList.index(sNode)][3], 'node'))
 			
 			self.minPathLength = len(map)
 			self.minPath = map
@@ -899,12 +903,13 @@ class Evaluator(object):
 			
 		# another ending condition
 		elif len(map) >= self.minPathLength or len(sNode.children) == 0 or sNode.value == 'root':
+			# need to quite the search
 			return
 			
 		elif direction == 'down':
 		
 			# we still need to append the relationship
-			map.append((sNode.edge.relationship, direction))
+			map.append((sNode.type, sNode.edge.relationship, direction, 'null'))
 			
 			# we can afford to do a breath-first search
 			for child in sNode.children:
@@ -913,7 +918,7 @@ class Evaluator(object):
 		elif direction == 'up':
 		
 			# we still need to append the relationship
-			map.append((sNode.edge.relationship, direction))
+			map.append((sNode.type, sNode.edge.relationship, direction, 'null'))
 			
 			# we can afford to do a breath-first search
 			for child in sNode.children:
@@ -922,8 +927,5 @@ class Evaluator(object):
 			self.findShortestPath(sNode.parent, tNode, copy(map), 'up')
 			
 		else:
-			print 'we are in big trouble!'
-			
-		
-		
+			print 'we are in big trouble!913'
 	
