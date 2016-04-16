@@ -12,12 +12,12 @@ class Tree(object):
 		self.dependencies = dependencies
 		self.usedIndices = set([])
 		self.root = ''
-		self.foundNode = None
+		self.foundNodes = []
 		self.xcompD = {}
 		self.dobjList = []
 		self.termD = {}
 		self.termDPath = '.\InspirationSet\\termD.txt'
-		self.rule = ''
+		self.rules = []
 		
 		
 	def createHead(self, node):
@@ -54,21 +54,15 @@ class Tree(object):
 		else:
 			self.findNodeBuildTree(self.root, value, type)
 
-	def findNodeSubstructures(self, Node, value, type, parent, relationship):
+	def findNode(self, Node, dataTup):
 		
-		if Node.value == value and Node.type == type and Node.parent == parent and Node.edge.relationship == relationship:
+		if Node.type == dataTup[0] and Node.edge.relationship == dataTup[1]:
 		
-			self.foundNode = Node
+			self.foundNodes.append(Node)
 				
 		else:
 			for child in Node.children:			
-				try:
-					self.findNodeSubstructures(child, value, type, parent, relationship)
-					
-				except:
-					print 'something went wrong'
-					pass	
-					# this means that there is no need to keep progressing down this branch
+				self.findNode(child, dataTup)
 					
 	def findNodeBuildTree(self, Node, value, type):
 		
@@ -108,49 +102,7 @@ class Tree(object):
 		self.root = Node.Node(g[0], g[1], node, 'root')
 		node.children.append(self.root)
 		self.createHead(self.root)
-		
-	def findRelationship(self, Node, funcList, term, direction, termList):
-	
-		#print Node.value, Node.edge.relationship, len(Node.children), direction
-		
-		if Node.edge.relationship == term:	
 
-			if len(funcList[0]) == 3:
-				# we have hit a node
-				termList.append((Node.value, 'relationship'))
-			#print term, Node.value			
-			self.parseFunctions(Node, deepcopy(funcList[1:]), deepcopy(termList))
-			
-		elif direction == 'down':
-			for child in Node.children:
-				#print child.value, 'child of', Node.value
-				self.findRelationship(child, deepcopy(funcList), term, direction, deepcopy(termList))
-				
-		elif direction == 'up':
-			self.findRelationship(Node.parent, deepcopy(funcList), term, direction, deepcopy(termList))
-			
-		else:
-			print 'we are in trouble'
-			
-	def findType(self, Node, funcList, term, direction, termList):
-			
-		#		case of verbs      case of nouns	
-		if Node.type[0] == term or Node.type == term:
-			if len(funcList[0]) == 3:
-				# we have hit a node
-				termList.append((Node.value, 'type'))
-			#print term, Node.value			
-			self.parseFunctions(Node, deepcopy(funcList[1:]), deepcopy(termList))
-		
-		elif direction == 'down':
-			for child in Node.children:
-				self.findType(child, deepcopy(funcList), term, direction, deepcopy(termList))
-				
-		elif direction == 'up':
-			self.findType(Node.parent, deepcopy(funcList), term, direction, deepcopy(termList))
-			
-		else:
-			print 'we are in trouble'
 			
 	def parseFunctions(self, Node, funcList, termList):
 	
@@ -161,48 +113,50 @@ class Tree(object):
 			#print termList
 			#print 'this is the end of the road, folks!'
 			
-		elif self.termD[funcList[0][0]] == 'relationship':
-			#print funcList[0]
-			#									  relationship	  direction
-			self.findRelationship(Node, deepcopy(funcList), funcList[0][0], funcList[0][1], deepcopy(termList))
-			
-		elif self.termD[funcList[0][0]] == 'type':
-			#print funcList[0]
-			#							  type			  direction
-			self.findType(Node, deepcopy(funcList), funcList[0][0], funcList[0][1], deepcopy(termList))
+		elif Node.type == funcList[0][0] and Node.edge.relationship == funcList[0][1]:
+			if len(funcList[0]) == 5:
+				#print 'here',funcList[0], Node.value
+				termList.append((Node.value, funcList[0][3]))
 				
-		#except:
-		#	print 'broke chain at', Node.value, 'looking for', funcList[0]
+			if len(funcList) == 1:	
+				self.parseFunctions(Node, deepcopy(funcList[1:]), deepcopy(termList))	
 			
-	def loadTermD(self):
-		
-		f = open(self.termDPath, 'r')
-		self.termD = cPickle.load(f)
-		f.close()
+			elif funcList[1][2] == 'down':
+				for child in Node.children:
+					#print child.value, 'child of', Node.value
+					self.parseFunctions(child, deepcopy(funcList[1:]), deepcopy(termList))
+					
+			elif funcList[1][2] == 'up':
+				self.parseFunctions(Node.parent, deepcopy(funcList[1:]), deepcopy(termList))
+				
+			else:
+				print 'we are in trouble139'
 		
 	def termListToRule(self, termList):
 		
 		#termList.reverse()
+		#print termList
 		
 		l = ['(', ',', ')']
 		
 		for i, tup in enumerate(termList):
 		
-			if tup[1] == 'relationship':
+			if tup[1] == 'variable':
 				
 				if i == 0:
 					l.insert(l.index(')'), str(tup[0]))
 				else:
 					l.insert(l.index('(') + 1, str(tup[0]))
 				
-			elif tup[1] == 'type':
+			elif tup[1] == 'function':
 				l.insert(0, '&' + str(tup[0]))
 				
 			else:
-				print 'we are in real trouble!'
+				print tup
+				print 'we are in trouble153!'
 				
 		s = str(l).replace('[','').replace(']','').replace(', ', '').replace("'", "")
-		self.rule = s[1:]
+		self.rules.append(s[1:])
 			
 		
 		
